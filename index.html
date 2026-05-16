@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>FEMUR BEAT — 大腿骨解剖リズム学習</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-deep: #060812;
+    --ink: #e8e4d8;
+    --bone: #f5ecd0;
+    --bone-dark: #c9b896;
+    --accent: #ff5e3a;
+    --accent-glow: #ff8c5a;
+    --good: #4ade80;
+    --perfect: #fbbf24;
+    --miss: #f87171;
+    --grid: rgba(232, 228, 216, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-deep);
+    color: var(--ink);
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+
+  #app {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at top, #1a1f3a 0%, var(--bg) 40%, var(--bg-deep) 100%);
+    overflow: hidden;
+  }
+
+  /* グリッド背景 */
+  #app::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  /* ====== タイトル画面 ====== */
+  #title-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5vh 6vw;
+    z-index: 10;
+    text-align: center;
+  }
+
+  .title-mark {
+    font-family: 'Georgia', serif;
+    font-size: clamp(10px, 2.5vw, 14px);
+    letter-spacing: 0.4em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1.5em;
+    opacity: 0.9;
+  }
+
+  .title-main {
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    font-size: clamp(48px, 14vw, 96px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    color: var(--bone);
+    text-shadow: 0 0 40px rgba(245, 236, 208, 0.2);
+    margin-bottom: 0.2em;
+  }
+
+  .title-sub {
+    font-size: clamp(14px, 3.8vw, 20px);
+    color: var(--bone-dark);
+    letter-spacing: 0.15em;
+    margin-bottom: 2em;
+    font-weight: 300;
+  }
+
+  .title-divider {
+    width: 60px;
+    height: 1px;
+    background: var(--accent);
+    margin: 1.5em auto;
+  }
+
+  .title-desc {
+    font-size: clamp(12px, 3.2vw, 15px);
+    color: var(--ink);
+    opacity: 0.7;
+    line-height: 1.8;
+    max-width: 320px;
+    margin-bottom: 2.5em;
+  }
+
+  .difficulty-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 1.5em;
+  }
+
+  .diff-btn {
+    background: transparent;
+    color: var(--bone);
+    border: 1px solid var(--bone-dark);
+    padding: 12px 20px;
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 80px;
+  }
+
+  .diff-btn.active {
+    background: var(--accent);
+    color: var(--bg-deep);
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(255, 94, 58, 0.4);
+  }
+
+  .start-btn {
+    background: var(--bone);
+    color: var(--bg-deep);
+    border: none;
+    padding: 18px 48px;
+    font-family: 'Georgia', serif;
+    font-size: 18px;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(245, 236, 208, 0.2);
+  }
+
+  .start-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 10px rgba(245, 236, 208, 0.1);
+  }
+
+  .credit {
+    position: absolute;
+    bottom: 16px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--bone-dark);
+    opacity: 0.5;
+  }
+
+  /* ====== ゲーム画面 ====== */
+  #game-screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+  }
+
+  #game-screen.active {
+    display: flex;
+  }
+
+  /* HUD */
+  #hud {
+    position: relative;
+    z-index: 5;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(6, 8, 18, 0.9), transparent);
+    pointer-events: none;
+  }
+
+  .hud-block {
+    font-family: 'Georgia', serif;
+  }
+
+  .hud-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--bone-dark);
+    text-transform: uppercase;
+  }
+
+  .hud-value {
+    font-size: 22px;
+    color: var(--bone);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  #combo-display {
+    font-size: 14px;
+    color: var(--accent);
+  }
+
+  /* ノーツレーン */
+  #lanes-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  #falling-area {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .note {
+    position: absolute;
+    background: linear-gradient(135deg, var(--bone) 0%, var(--bone-dark) 100%);
+    color: var(--bg-deep);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-family: 'Hiragino Sans', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+    transform: translateX(-50%);
+    will-change: top;
+    transition: opacity 0.15s;
+  }
+
+  .note.hit {
+    animation: hitFlash 0.3s forwards;
+  }
+
+  .note.missed {
+    opacity: 0.3;
+    background: var(--miss);
+  }
+
+  @keyframes hitFlash {
+    0% { transform: translateX(-50%) scale(1); opacity: 1; }
+    100% { transform: translateX(-50%) scale(1.4); opacity: 0; }
+  }
+
+  /* 解剖図エリア */
+  #anatomy-zone {
+    position: relative;
+    height: 62%;
+    background: linear-gradient(to bottom, transparent 0%, rgba(10, 14, 26, 0.6) 30%);
+    flex-shrink: 0;
+  }
+
+  #judgment-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 12px var(--accent-glow);
+    z-index: 3;
+  }
+
+  #judgment-line::before,
+  #judgment-line::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  #judgment-line::before { left: 8px; }
+  #judgment-line::after { right: 8px; }
+
+  #femur-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .landmark {
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .landmark .visible-mark {
+    fill: rgba(245, 236, 208, 0.15);
+    stroke: var(--bone-dark);
+    stroke-width: 1.5;
+    transition: all 0.15s;
+  }
+
+  .landmark:hover .visible-mark,
+  .landmark.active .visible-mark {
+    fill: var(--accent);
+    stroke: var(--accent-glow);
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px var(--accent-glow));
+  }
+
+  .landmark.flash .visible-mark {
+    animation: flashHit 0.4s;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+
+  @keyframes flashHit {
+    0% { fill: var(--perfect); transform: scale(1.4); }
+    100% { fill: rgba(245, 236, 208, 0.15); transform: scale(1); }
+  }
+
+  /* 判定エフェクト */
+  #judge-effect {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Georgia', serif;
+    font-size: 36px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 6;
+    text-shadow: 0 0 20px currentColor;
+  }
+
+  @keyframes judgePop {
+    0% { opacity: 0; transform: translate(-50%, -30%) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -70%) scale(1); }
+  }
+
+  .judge-show { animation: judgePop 0.6s forwards; }
+
+  /* 結果画面 */
+  #result-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 8, 18, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5vh 6vw;
+    z-index: 20;
+    text-align: center;
+  }
+
+  #result-screen.active { display: flex; }
+
+  .result-title {
+    font-family: 'Georgia', serif;
+    font-size: 14px;
+    letter-spacing: 0.4em;
+    color: var(--accent);
+    margin-bottom: 1em;
+  }
+
+  .result-score {
+    font-family: 'Georgia', serif;
+    font-size: clamp(60px, 18vw, 100px);
+    color: var(--bone);
+    line-height: 1;
+    margin-bottom: 0.3em;
+    font-weight: 600;
+  }
+
+  .result-rank {
+    font-size: clamp(40px, 12vw, 64px);
+    color: var(--perfect);
+    margin-bottom: 1em;
+    font-weight: bold;
+    text-shadow: 0 0 30px currentColor;
+  }
+
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 32px;
+    margin-bottom: 2em;
+    font-size: 14px;
+  }
+
+  .stat-item {
+    text-align: left;
+    border-left: 2px solid var(--bone-dark);
+    padding-left: 12px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--bone-dark);
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-size: 18px;
+    color: var(--bone);
+    font-weight: 600;
+  }
+
+  .result-buttons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .result-btn {
+    background: transparent;
+    border: 1px solid var(--bone);
+    color: var(--bone);
+    padding: 14px 28px;
+    font-family: 'Georgia', serif;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .result-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg-deep);
+  }
+
+  .result-btn:active { transform: scale(0.97); }
+
+  /* ミスリスト */
+  .miss-list {
+    max-height: 30vh;
+    overflow-y: auto;
+    margin-bottom: 1.5em;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .miss-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(245, 236, 208, 0.1);
+    color: var(--bone-dark);
+  }
+
+  .miss-item .ja { color: var(--bone); }
+
+  /* ローディング */
+  #loading {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: opacity 0.5s;
+  }
+
+  #loading.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
+
+  .loader {
+    font-family: 'Georgia', serif;
+    letter-spacing: 0.3em;
+    color: var(--bone-dark);
+    font-size: 12px;
+  }
+
+  /* 横画面対応 */
+  @media (orientation: landscape) and (max-height: 500px) {
+    #anatomy-zone { height: 65%; }
+    .title-main { font-size: 48px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="loader">LOADING...</div>
+  </div>
+
+  <!-- タイトル画面 -->
+  <div id="title-screen">
+    <div class="title-mark">— Anatomy Rhythm —</div>
+    <div class="title-main">FEMUR<br>BEAT</div>
+    <div class="title-sub">大腿骨ビート</div>
+    <div class="title-divider"></div>
+    <div class="title-desc">
+      落ちてくる解剖名を<br>
+      対応する骨のランドマークでキャッチ。<br>
+      リハビリテーション学生のための<br>
+      解剖学リズム学習。
+    </div>
+    <div class="difficulty-row">
+      <button class="diff-btn" data-diff="easy">EASY</button>
+      <button class="diff-btn active" data-diff="normal">NORMAL</button>
+      <button class="diff-btn" data-diff="hard">HARD</button>
+    </div>
+    <button class="start-btn" id="start-btn">▶ START</button>
+    <div class="credit">© Anatomy Rhythm Project</div>
+  </div>
+
+  <!-- ゲーム画面 -->
+  <div id="game-screen">
+    <div id="hud">
+      <div class="hud-block">
+        <div class="hud-label">Score</div>
+        <div class="hud-value" id="score-display">0</div>
+      </div>
+      <div class="hud-block" style="text-align:center;">
+        <div class="hud-label">Combo</div>
+        <div class="hud-value" id="combo-display">×0</div>
+      </div>
+      <div class="hud-block" style="text-align:right;">
+        <div class="hud-label">Notes</div>
+        <div class="hud-value" id="notes-display">0/0</div>
+      </div>
+    </div>
+
+    <div id="lanes-container">
+      <div id="falling-area"></div>
+    </div>
+
+    <div id="anatomy-zone">
+      <div id="judgment-line"></div>
+      <div id="judge-effect"></div>
+      <svg id="femur-svg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid meet">
+        <!-- 大腿骨イラスト（前面観・簡略） -->
+        <defs>
+          <linearGradient id="boneGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#c9b896"/>
+            <stop offset="50%" stop-color="#f5ecd0"/>
+            <stop offset="100%" stop-color="#a89878"/>
+          </linearGradient>
+          <filter id="boneShadow">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+            <feOffset dx="2" dy="4"/>
+            <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <g filter="url(#boneShadow)">
+          <!-- 大腿骨頭 -->
+          <circle cx="130" cy="80" r="48" fill="url(#boneGrad)" stroke="#8a7560" stroke-width="1.5"/>
+          <!-- 大腿骨頭窩（くぼみ） -->
+          <ellipse cx="125" cy="75" rx="10" ry="8" fill="#a89878" opacity="0.6"/>
+          <!-- 大腿骨頸 -->
+          <path d="M 165 110 Q 195 130 230 150" stroke="url(#boneGrad)" stroke-width="40" fill="none" stroke-linecap="round"/>
+          <!-- 大転子 -->
+          <path d="M 230 95 Q 285 95 290 145 Q 285 175 250 170 Z" fill="url(#boneGrad)" stroke="#8a7560" stroke-width="1.5"/>
+          <!-- 小転子 -->
+          <ellipse cx="180" cy="200" rx="18" ry="13" fill="url(#boneGrad)" stroke="#8a7560" stroke-width="1.5" transform="rotate(-25 180 200)"/>
+          <!-- 転子間線（前面の隆起線） -->
+          <path d="M 200 145 Q 235 165 255 195" stroke="#8a7560" stroke-width="2" fill="none" opacity="0.7"/>
+          <!-- 骨幹 -->
+          <path d="M 215 195 Q 220 400 218 590" stroke="url(#boneGrad)" stroke-width="48" fill="none" stroke-linecap="round"/>
+          <!-- 粗線（後面の縦走稜線、点線で表現） -->
+          <path d="M 218 240 L 218 560" stroke="#8a7560" stroke-width="2" stroke-dasharray="6 4" opacity="0.6"/>
+          <!-- 内側上顆 -->
+          <ellipse cx="175" cy="640" rx="34" ry="26" fill="url(#boneGrad)" stroke="#8a7560" stroke-width="1.5"/>
+          <!-- 外側上顆 -->
+          <ellipse cx="265" cy="640" rx="32" ry="24" fill="url(#boneGrad)" stroke="#8a7560" stroke-width="1.5"/>
+          <!-- 顆間窩（中央のくぼみ） -->
+          <path d="M 195 660 Q 220 720 245 660 Q 245 720 220 740 Q 195 720 195 660 Z" fill="#8a7560" opacity="0.4"/>
+          <!-- 内側顆 -->
+          <ellipse cx="180" cy="720" rx="28" ry="22" fill="url(#boneGrad)" stroke="#8a7560" stroke-width="1.5"/>
+          <!-- 外側顆 -->
+          <ellipse cx="260" cy="720" rx="28" ry="22" fill="url(#boneGrad)" stroke="#8a7560" stroke-width="1.5"/>
+        </g>
+
+        <!-- ランドマークのタップ領域（JSで生成） -->
+        <g id="landmarks-group"></g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="result-screen">
+    <div class="result-title">— Result —</div>
+    <div class="result-score" id="final-score">0</div>
+    <div class="result-rank" id="final-rank">—</div>
+    <div class="result-stats">
+      <div class="stat-item">
+        <div class="stat-label">Perfect</div>
+        <div class="stat-value" id="stat-perfect">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Good</div>
+        <div class="stat-value" id="stat-good">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Miss</div>
+        <div class="stat-value" id="stat-miss">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Max Combo</div>
+        <div class="stat-value" id="stat-combo">0</div>
+      </div>
+    </div>
+    <div class="miss-list" id="miss-list"></div>
+    <div class="result-buttons">
+      <button class="result-btn primary" id="retry-btn">RETRY</button>
+      <button class="result-btn" id="back-btn">TITLE</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================
+// デバッグログ（画面上に表示）
+// ============================================
+var DEBUG = true; // 問題解決後はfalseに
+var _dbgLogs = [];
+function dbg(msg) {
+  if (!DEBUG) return;
+  try {
+    _dbgLogs.push(new Date().toISOString().substr(11, 8) + ' ' + msg);
+    if (_dbgLogs.length > 20) _dbgLogs.shift();
+    var box = document.getElementById('debug-box');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'debug-box';
+      box.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#000;color:#0f0;font-family:monospace;font-size:11px;padding:6px 8px;z-index:999999;max-height:50vh;overflow:auto;white-space:pre-wrap;line-height:1.4;border-bottom:2px solid #0f0;pointer-events:auto;';
+      (document.body || document.documentElement).appendChild(box);
+    }
+    box.textContent = _dbgLogs.join('\n');
+  } catch(e) {}
+}
+
+// グローバルエラーキャッチ
+window.onerror = function(msg, src, line, col, err) {
+  dbg('ERR: ' + msg + ' @ L' + line + ':' + col);
+  return false;
+};
+window.addEventListener('error', function(e) {
+  dbg('ERR2: ' + (e.message || e.error || 'unknown'));
+});
+window.addEventListener('unhandledrejection', function(e) {
+  dbg('REJ: ' + (e.reason || 'unknown'));
+});
+
+dbg('script start');
+
+// ============================================
+// 大腿骨ランドマーク データ
+// 座標は viewBox 400x600 上のSVG座標
+// ============================================
+const LANDMARKS = [
+  { id: 'head',          ja: '大腿骨頭',     en: 'Femoral head',           x: 130, y: 80,  hint: '寛骨臼と関節' },
+  { id: 'fovea',         ja: '大腿骨頭窩',   en: 'Fovea capitis',          x: 125, y: 75,  hint: '大腿骨頭靱帯' },
+  { id: 'neck',          ja: '大腿骨頸',     en: 'Femoral neck',           x: 195, y: 130, hint: '高齢者骨折好発' },
+  { id: 'greater_troch', ja: '大転子',       en: 'Greater trochanter',     x: 275, y: 130, hint: '中殿筋付着' },
+  { id: 'lesser_troch',  ja: '小転子',       en: 'Lesser trochanter',      x: 180, y: 200, hint: '腸腰筋付着' },
+  { id: 'intertroch_line', ja: '転子間線',  en: 'Intertrochanteric line', x: 230, y: 175, hint: '前面・腸骨大腿靱帯' },
+  { id: 'shaft',         ja: '骨幹',         en: 'Shaft (body)',           x: 218, y: 350, hint: '円柱状の本幹' },
+  { id: 'linea_aspera',  ja: '粗線',         en: 'Linea aspera',           x: 218, y: 480, hint: '後面の縦走稜線' },
+  { id: 'med_epicond',   ja: '内側上顆',     en: 'Medial epicondyle',      x: 145, y: 625, hint: '内側側副靱帯付着' },
+  { id: 'lat_epicond',   ja: '外側上顆',     en: 'Lateral epicondyle',     x: 295, y: 625, hint: '外側側副靱帯付着' },
+  { id: 'med_condyle',   ja: '内側顆',       en: 'Medial condyle',         x: 170, y: 735, hint: '脛骨と関節' },
+  { id: 'lat_condyle',   ja: '外側顆',       en: 'Lateral condyle',        x: 270, y: 735, hint: '脛骨と関節' },
+  { id: 'intercond_fossa', ja: '顆間窩',    en: 'Intercondylar fossa',    x: 220, y: 690, hint: '十字靱帯付着' }
+];
+
+// ============================================
+// 難易度設定
+// ============================================
+const DIFFICULTY = {
+  easy:   { speed: 80,  interval: 2200, noteCount: 16, hitWindow: 90 },
+  normal: { speed: 130, interval: 1500, noteCount: 24, hitWindow: 70 },
+  hard:   { speed: 200, interval: 1000, noteCount: 32, hitWindow: 55 }
+};
+
+// ============================================
+// ゲーム状態
+// ============================================
+const state = {
+  difficulty: 'normal',
+  running: false,
+  startTime: 0,
+  spawnTimer: null,
+  rafId: null,
+  notes: [],          // アクティブなノーツ
+  spawnedCount: 0,
+  hitCount: 0,
+  missCount: 0,
+  goodCount: 0,
+  perfectCount: 0,
+  combo: 0,
+  maxCombo: 0,
+  score: 0,
+  missedLandmarks: [],
+  audioCtx: null,
+  bgmInterval: null,
+  bgmStep: 0
+};
+
+// ============================================
+// オーディオ（Web Audio APIで完全自前生成）
+// ============================================
+function initAudio() {
+  if (state.audioCtx) return;
+  state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playTone(freq, dur, type = 'sine', vol = 0.15) {
+  if (!state.audioCtx) return;
+  const ctx = state.audioCtx;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + dur);
+}
+
+function sfxHit()     { playTone(880, 0.12, 'triangle', 0.18); setTimeout(() => playTone(1320, 0.08, 'sine', 0.12), 30); }
+function sfxPerfect() { playTone(1320, 0.1, 'triangle', 0.2); setTimeout(() => playTone(1760, 0.12, 'sine', 0.15), 40); setTimeout(() => playTone(2200, 0.1, 'sine', 0.1), 80); }
+function sfxMiss()    { playTone(180, 0.2, 'sawtooth', 0.12); }
+
+// BGM: シンプルな循環アルペジオ（C minorペンタトニック調）
+function startBGM() {
+  stopBGM();
+  if (!state.audioCtx) return;
+  // C minor pentatonic + low bass
+  const bassNotes = [130.81, 130.81, 174.61, 196.00]; // C3, C3, F3, G3
+  const melody = [523.25, 622.25, 698.46, 622.25, 523.25, 466.16, 392.00, 466.16]; // C5, Eb5, F5, Eb5, C5, Bb4, G4, Bb4
+  state.bgmStep = 0;
+  const interval = 240; // ms per step
+  state.bgmInterval = setInterval(() => {
+    const step = state.bgmStep;
+    // ベース（4拍ごと）
+    if (step % 4 === 0) {
+      playTone(bassNotes[Math.floor(step / 4) % bassNotes.length], 0.4, 'triangle', 0.08);
+    }
+    // メロディ（1拍ごと、控えめ）
+    playTone(melody[step % melody.length], 0.18, 'sine', 0.04);
+    // 4拍目にハイハット的なノイズ
+    if (step % 2 === 1) {
+      playTone(3000 + Math.random() * 500, 0.03, 'square', 0.015);
+    }
+    state.bgmStep++;
+  }, interval);
+}
+
+function stopBGM() {
+  if (state.bgmInterval) {
+    clearInterval(state.bgmInterval);
+    state.bgmInterval = null;
+  }
+}
+
+// ============================================
+// ランドマーク描画
+// ============================================
+function renderLandmarks() {
+  const group = document.getElementById('landmarks-group');
+  group.innerHTML = '';
+
+  // 全ランドマークに対してタップ領域を作成
+  LANDMARKS.forEach((lm) => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.classList.add('landmark');
+    g.setAttribute('data-id', lm.id);
+
+    // 大きめの透明判定領域（指でタップしやすく）
+    const hitCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    hitCircle.setAttribute('cx', lm.x);
+    hitCircle.setAttribute('cy', lm.y);
+    hitCircle.setAttribute('r', 28);
+    hitCircle.setAttribute('fill', 'transparent');
+    hitCircle.setAttribute('class', 'hit-area');
+    g.appendChild(hitCircle);
+
+    // 表示用の小さい円
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', lm.x);
+    circle.setAttribute('cy', lm.y);
+    circle.setAttribute('r', 12);
+    circle.setAttribute('class', 'visible-mark');
+    g.appendChild(circle);
+
+    // pointerdown + touchstart 両方でiOS Safari対応
+    const tapHandler = (e) => {
+      e.preventDefault();
+      handleLandmarkTap(lm.id, g);
+    };
+    g.addEventListener('pointerdown', tapHandler);
+    g.addEventListener('touchstart', tapHandler, { passive: false });
+
+    document.getElementById('landmarks-group').appendChild(g);
+  });
+}
+
+// ============================================
+// ノーツ生成・落下
+// ============================================
+let laneWidth = 0;
+let fallHeight = 0;
+
+function calcDimensions() {
+  const container = document.getElementById('lanes-container');
+  const rect = container.getBoundingClientRect();
+  laneWidth = rect.width;
+  fallHeight = rect.height;
+}
+
+function spawnNote() {
+  if (state.spawnedCount >= DIFFICULTY[state.difficulty].noteCount) {
+    // 最後のノーツが落ち切るのを待つ
+    return;
+  }
+
+  // 同じランドマークが連続しないようにランダム選択
+  const lastId = state.notes.length > 0 ? state.notes[state.notes.length - 1].landmarkId : null;
+  let lm;
+  let attempts = 0;
+  do {
+    lm = LANDMARKS[Math.floor(Math.random() * LANDMARKS.length)];
+    attempts++;
+  } while (lm.id === lastId && attempts < 5);
+
+  // ノーツの水平位置をランドマークのx座標と揃える（SVGビューポート比率）
+  const svgEl = document.getElementById('femur-svg');
+  const svgRect = svgEl.getBoundingClientRect();
+  const containerRect = document.getElementById('lanes-container').getBoundingClientRect();
+  // SVG viewBox 400px幅をsvgRectにマップ
+  const scaleX = svgRect.width / 400;
+  const screenX = svgRect.left + lm.x * scaleX - containerRect.left;
+
+  const noteEl = document.createElement('div');
+  noteEl.className = 'note';
+  noteEl.style.left = screenX + 'px';
+  noteEl.style.top = '-40px';
+  noteEl.innerHTML = lm.ja;
+  document.getElementById('falling-area').appendChild(noteEl);
+
+  state.notes.push({
+    el: noteEl,
+    landmarkId: lm.id,
+    landmarkData: lm,
+    y: -40,
+    spawnTime: performance.now()
+  });
+  state.spawnedCount++;
+  updateHud();
+}
+
+function updateNotes(dt) {
+  const speed = DIFFICULTY[state.difficulty].speed;
+  for (let i = state.notes.length - 1; i >= 0; i--) {
+    const n = state.notes[i];
+    n.y += speed * dt;
+    n.el.style.top = n.y + 'px';
+
+    // 判定ライン位置（lanes-containerの高さ）を超えてさらに落ちたらミス
+    if (n.y > fallHeight + 30) {
+      // ミス処理
+      n.el.classList.add('missed');
+      setTimeout(() => n.el.remove(), 150);
+      state.missCount++;
+      state.combo = 0;
+      state.missedLandmarks.push(n.landmarkData);
+      showJudge('MISS', 'var(--miss)');
+      sfxMiss();
+      state.notes.splice(i, 1);
+      updateHud();
+    }
+  }
+
+  // 全ノーツ消化＆スポーン終了で結果へ
+  if (state.spawnedCount >= DIFFICULTY[state.difficulty].noteCount && state.notes.length === 0) {
+    endGame();
+  }
+}
+
+// ============================================
+// 判定処理
+// ============================================
+function handleLandmarkTap(landmarkId, gEl) {
+  if (!state.running) return;
+
+  // フラッシュ
+  gEl.classList.add('flash');
+  setTimeout(() => gEl.classList.remove('flash'), 400);
+
+  // 判定ライン（fallHeight地点）にもっとも近い該当ノーツを探す
+  const hitWindow = DIFFICULTY[state.difficulty].hitWindow;
+  let target = null;
+  let bestDist = Infinity;
+
+  for (const n of state.notes) {
+    if (n.landmarkId !== landmarkId) continue;
+    const dist = Math.abs(n.y - fallHeight);
+    if (dist <= hitWindow && dist < bestDist) {
+      bestDist = dist;
+      target = n;
+    }
+  }
+
+  if (!target) {
+    // 該当ノーツなし → 何もしない（誤タップによるミスはなし、ペナルティ無し設計）
+    return;
+  }
+
+  // ヒット判定
+  const idx = state.notes.indexOf(target);
+  state.notes.splice(idx, 1);
+  target.el.classList.add('hit');
+  setTimeout(() => target.el.remove(), 300);
+
+  // Perfect / Good 判定
+  if (bestDist < hitWindow * 0.4) {
+    state.perfectCount++;
+    state.score += 100;
+    state.combo++;
+    showJudge('PERFECT', 'var(--perfect)');
+    sfxPerfect();
+  } else {
+    state.goodCount++;
+    state.score += 50;
+    state.combo++;
+    showJudge('GOOD', 'var(--good)');
+    sfxHit();
+  }
+  if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+  state.hitCount++;
+  updateHud();
+}
+
+function showJudge(text, color) {
+  const el = document.getElementById('judge-effect');
+  el.textContent = text;
+  el.style.color = color;
+  el.classList.remove('judge-show');
+  void el.offsetWidth; // reflow
+  el.classList.add('judge-show');
+}
+
+// ============================================
+// HUD更新
+// ============================================
+function updateHud() {
+  document.getElementById('score-display').textContent = state.score.toLocaleString();
+  document.getElementById('combo-display').textContent = '×' + state.combo;
+  document.getElementById('notes-display').textContent =
+    (state.hitCount + state.missCount) + '/' + DIFFICULTY[state.difficulty].noteCount;
+}
+
+// ============================================
+// ゲームループ
+// ============================================
+let lastTime = 0;
+function gameLoop(t) {
+  if (!state.running) return;
+  const dt = Math.min((t - lastTime) / 1000, 0.05);
+  lastTime = t;
+  updateNotes(dt);
+  state.rafId = requestAnimationFrame(gameLoop);
+}
+
+// ============================================
+// ゲーム開始・終了
+// ============================================
+function startGame() {
+  // リセット
+  state.notes.forEach(n => n.el.remove());
+  state.notes = [];
+  state.spawnedCount = 0;
+  state.hitCount = 0;
+  state.missCount = 0;
+  state.goodCount = 0;
+  state.perfectCount = 0;
+  state.combo = 0;
+  state.maxCombo = 0;
+  state.score = 0;
+  state.missedLandmarks = [];
+  state.running = true;
+
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('game-screen').classList.add('active');
+  document.getElementById('result-screen').classList.remove('active');
+
+  setTimeout(() => {
+    calcDimensions();
+    updateHud();
+
+    initAudio();
+    if (state.audioCtx.state === 'suspended') state.audioCtx.resume();
+    startBGM();
+
+    // 最初のノーツまで少し遅延
+    setTimeout(() => spawnNote(), 500);
+    state.spawnTimer = setInterval(() => {
+      if (state.spawnedCount < DIFFICULTY[state.difficulty].noteCount) {
+        spawnNote();
+      } else {
+        clearInterval(state.spawnTimer);
+        state.spawnTimer = null;
+      }
+    }, DIFFICULTY[state.difficulty].interval);
+
+    lastTime = performance.now();
+    state.rafId = requestAnimationFrame(gameLoop);
+  }, 100);
+}
+
+function endGame() {
+  state.running = false;
+  if (state.spawnTimer) { clearInterval(state.spawnTimer); state.spawnTimer = null; }
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  stopBGM();
+
+  // 結果表示
+  document.getElementById('final-score').textContent = state.score.toLocaleString();
+  document.getElementById('stat-perfect').textContent = state.perfectCount;
+  document.getElementById('stat-good').textContent = state.goodCount;
+  document.getElementById('stat-miss').textContent = state.missCount;
+  document.getElementById('stat-combo').textContent = state.maxCombo;
+
+  // ランク判定
+  const total = DIFFICULTY[state.difficulty].noteCount;
+  const accuracy = state.hitCount / total;
+  let rank, rankColor;
+  if (state.perfectCount === total) { rank = 'S+'; rankColor = '#fbbf24'; }
+  else if (accuracy >= 0.95) { rank = 'S'; rankColor = '#fbbf24'; }
+  else if (accuracy >= 0.85) { rank = 'A'; rankColor = '#4ade80'; }
+  else if (accuracy >= 0.70) { rank = 'B'; rankColor = '#60a5fa'; }
+  else if (accuracy >= 0.50) { rank = 'C'; rankColor = '#a78bfa'; }
+  else { rank = 'D'; rankColor = '#f87171'; }
+  const rankEl = document.getElementById('final-rank');
+  rankEl.textContent = rank;
+  rankEl.style.color = rankColor;
+
+  // ミス一覧
+  const missList = document.getElementById('miss-list');
+  if (state.missedLandmarks.length > 0) {
+    var counts = {};
+    for (var k = 0; k < state.missedLandmarks.length; k++) {
+      var lm = state.missedLandmarks[k];
+      if (!counts[lm.id]) counts[lm.id] = { lm: lm, n: 0 };
+      counts[lm.id].n++;
+    }
+    var itemsHtml = '';
+    for (var key in counts) {
+      var c = counts[key];
+      itemsHtml += '<div class="miss-item"><span class="ja">' + c.lm.ja + '</span><span>' + c.lm.en + ' ×' + c.n + '</span></div>';
+    }
+    missList.innerHTML = '<div style="font-size:10px; letter-spacing:0.2em; color:var(--bone-dark); margin-bottom:8px;">— REVIEW —</div>' + itemsHtml;
+  } else {
+    missList.innerHTML = '<div style="font-size:12px; color:var(--good); text-align:center; padding:10px;">PERFECT RECALL ★</div>';
+  }
+
+  document.getElementById('result-screen').classList.add('active');
+}
+
+function backToTitle() {
+  document.getElementById('result-screen').classList.remove('active');
+  document.getElementById('game-screen').classList.remove('active');
+  document.getElementById('title-screen').style.display = 'flex';
+  // 全ノーツクリア
+  state.notes.forEach(n => n.el.remove());
+  state.notes = [];
+}
+
+// ============================================
+// 初期化
+// ============================================
+function init() {
+  dbg('init() called');
+  try {
+    dbg('renderLandmarks...');
+    renderLandmarks();
+    dbg('renderLandmarks OK');
+
+    // 難易度ボタン
+    var diffBtns = document.querySelectorAll('.diff-btn');
+    dbg('diff btns: ' + diffBtns.length);
+    for (var i = 0; i < diffBtns.length; i++) {
+      (function(btn) {
+        btn.addEventListener('click', function() {
+          var all = document.querySelectorAll('.diff-btn');
+          for (var j = 0; j < all.length; j++) all[j].classList.remove('active');
+          btn.classList.add('active');
+          state.difficulty = btn.getAttribute('data-diff');
+          dbg('diff: ' + state.difficulty);
+        });
+      })(diffBtns[i]);
+    }
+
+    var startBtn = document.getElementById('start-btn');
+    var retryBtn = document.getElementById('retry-btn');
+    var backBtn = document.getElementById('back-btn');
+    dbg('btns: start=' + !!startBtn + ' retry=' + !!retryBtn + ' back=' + !!backBtn);
+    
+    if (startBtn) startBtn.addEventListener('click', startGame);
+    if (retryBtn) retryBtn.addEventListener('click', startGame);
+    if (backBtn) backBtn.addEventListener('click', backToTitle);
+
+    window.addEventListener('resize', function() {
+      if (state.running) calcDimensions();
+    });
+
+    // ローディング解除
+    var loading = document.getElementById('loading');
+    dbg('loading el: ' + !!loading);
+    if (loading) {
+      loading.classList.add('hidden');
+      dbg('loading hidden class added');
+    }
+    dbg('init DONE');
+  } catch (e) {
+    dbg('init ERR: ' + (e.message || e));
+    var loading = document.getElementById('loading');
+    if (loading) {
+      loading.innerHTML = '<div style="color:#f87171; text-align:center; padding:20px; font-size:14px;">ERROR: ' + (e.message || e) + '</div>';
+    }
+  }
+}
+
+dbg('readyState: ' + document.readyState);
+
+// iOS Safari対策: 複数のタイミングでinitを試みる
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() { dbg('DOMContentLoaded fired'); init(); });
+} else {
+  dbg('readyState already non-loading, calling init via setTimeout');
+  setTimeout(init, 0);
+}
+
+// 念のためloadイベントもフォールバック
+window.addEventListener('load', function() {
+  dbg('load event fired');
+  var loading = document.getElementById('loading');
+  if (loading && !loading.classList.contains('hidden')) {
+    dbg('forcing loading hidden from load event');
+    loading.classList.add('hidden');
+  }
+});
+
+// 3秒経ってもinitが完了していなければ強制実行
+setTimeout(function() {
+  var loading = document.getElementById('loading');
+  if (loading && !loading.classList.contains('hidden')) {
+    dbg('3s elapsed, forcing init');
+    init();
+  }
+}, 3000);
+
+// iOSのオーディオアンロック
+function unlockAudio() {
+  if (state.audioCtx && state.audioCtx.state === 'suspended') {
+    state.audioCtx.resume();
+  }
+}
+document.addEventListener('touchstart', unlockAudio, { passive: true });
+document.addEventListener('click', unlockAudio);
+</script>
+</body>
+</html>
