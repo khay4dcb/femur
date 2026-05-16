@@ -640,7 +640,7 @@
 // ============================================
 // デバッグログ（画面上に表示）
 // ============================================
-var DEBUG = true; // 問題解決後はfalseに
+var DEBUG = false; // 問題解決後はfalseに
 var _dbgLogs = [];
 function dbg(msg) {
   if (!DEBUG) return;
@@ -696,9 +696,9 @@ const LANDMARKS = [
 // 難易度設定
 // ============================================
 const DIFFICULTY = {
-  easy:   { speed: 80,  interval: 2200, noteCount: 16, hitWindow: 90 },
-  normal: { speed: 130, interval: 1500, noteCount: 24, hitWindow: 70 },
-  hard:   { speed: 200, interval: 1000, noteCount: 32, hitWindow: 55 }
+  easy:   { speed: 27,  interval: 4500, noteCount: 12, hitWindow: 120 },
+  normal: { speed: 43,  interval: 3500, noteCount: 16, hitWindow: 100 },
+  hard:   { speed: 67,  interval: 2500, noteCount: 20, hitWindow: 80 }
 };
 
 // ============================================
